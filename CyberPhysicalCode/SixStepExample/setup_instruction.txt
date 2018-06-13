@@ -1,0 +1,43 @@
+Follow these instructions to setup all correctly.
+These programs allow to do the current’s control of a motor with the 6-step algorithm reading the reference signal from the potentiometer placed on the expansion board.
+
+**** Necessary material ***********
+_ Nucleo board (F302R8 or F446RE with respective programs)
+_ Expansion board X-NUCLEO-IHM07M1
+_ Gimbal Motor 5208 (or Gimbal Motor 5206)
+_ AS5601 Encoder
+***********************************
+
+
+** Nucleo settings ****************
+_ JP1 open
+_ JP5 on E5V
+_ JP6 close
+***********************************
+
+
+** Expansion Board settings *******
+
+Cable
+_ Connect the 3 cables of the motor in J2
+_ Connect power cables in J1 (8V to 48V DC)
+_ 3CN10 to SDA encoder
+_ 5CN10 to SCL encoder
+_ 16CN7 to +3V3 encoder
+_ 20CN7 to GND encoder
+
+Jumper
+_ JP1 open
+_ JP2 open
+_ J5 on 1Sh
+_ J6 on 1Sh
+_ J9 open (for Vin > 12V)
+
+***********************************
+
+
+** Motor phases *******************
+
+With the rotor resting on the table, connect the three phases to the expansion board in the order they are.
+
+***********************************
