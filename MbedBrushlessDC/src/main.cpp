@@ -1,169 +1,168 @@
-#include <mbed.h>
-#include <iostream>
+#include "mbed.h"
+#include "math.h"
 #include "AS5601.h"
 
-//#define PWM_PERIOD 0.00001f
-//#define TIM_USR TIM7
-//#define TIM_USR_IRQ TIM7_IRQn
-#define TEMPO_ATT1 10
+// PWM frequency 100kHz
+#define PWM_PERIOD 0.00001f
 
-Serial pc(USBTX, USBRX, 9600);
-AS5601 encoder(PB_9,PB_8); // PB_9=SDA, PB_8=SCL
+// AS5601
+AS5601 encoder(I2C_SDA, I2C_SCL);
 
+// variable to keep angle value from hall sensor
 float angle = 0;
-int step_number = 0;
-float position;
-AnalogIn ain(PB_1);
-AnalogIn phase_B_curr(PC_1);
-
-float pwm_positive=0.5f;
-float gnd_negative=0.0f;
-
-//DigitalOut led1(LED1);
+// Actual motor step
+volatile char step_number = 0;
+// Angle value scaled by electrical poles
+volatile float position = 0;
+// PWM duty cycle for motor phase
+float duty_cycle = 1.0f;
+float pwm_positive = duty_cycle;
+float gnd_negative = 0.0f;
+// ON board LED
+DigitalOut led1(LED1);
+// Phase 1 PWM OUT
 PwmOut uh_1(PA_8);
+// Phase 2 PWM OUT
 PwmOut vh_2(PA_9);
+// Phase 3 PWM OUT
 PwmOut wh_3(PA_10);
-
+// Phase 1 ENABLE PIN
 DigitalOut en_1(PC_10);
+// Phase 2 ENABLE PIN
 DigitalOut en_2(PC_11);
+// Phase 3 ENABLE PIN
 DigitalOut en_3(PC_12);
-
+// MOTOR DRIVER CHIP ENABLE PIN
+DigitalOut en_chip(PA_6);
 
 // This function converts hall sensor's angle into 6 electrical positions of a BLDC motor
 void stepRead()
 {
   // Check in which of 6 position the motor is
-  if(position<=6.0f || position>47.0f)
+  if (position <= 8.97f || position > 50.5f)
   {
-    step_number=5;
+    step_number = 5;
   }
-  else if(position>6.0f && position<=13.0f)
+  if (position > 8.35f && position <= 17.49f)
   {
-    step_number=4;
+    step_number = 4;
   }
-  else if(position>13.0f && position<=20.98f)
+  if (position > 16.87f && position <= 26.11f)
   {
-    step_number=3;
+    step_number = 3;
   }
-  else if(position>20.98f && position<=30.0f)
+  if (position > 25.49f && position <= 34.81f)
   {
-    step_number=2;
+    step_number = 2;
   }
-  else if(position>30.0f && position<=43.0f)
+  if (position > 33.84f && position <= 43.2f)
   {
-    step_number=1;
+    step_number = 1;
   }
-  else if(position>43.0f && position<=48.0f)
+  if ((position > 42.47f && position < 53.0f) || position <= 0.87f)
   {
-    step_number=0;
+    step_number = 0;
   }
 }
 
+// This function applies the 6-step algorithm to run the motor
+void step_forward()
+{
+  // Enable motor driver chip
+  if (!en_chip)
+  {
+    en_chip = 1;
+  }
 
+  // Read step
+  stepRead();
 
-int main() {
-    float angle;
-    double seno;
-    while(1) {
-        angle = encoder.get_angle_degrees();
-        position = fmod(angle,51.43f); //360/7=51.43, where 7 is number of magnets divided by 2
-        //stepRead();
-        step_number++;
-        step_number%=6;
-        switch(step_number) {
-            case 0:
-                wh_3.write(gnd_negative);
-                en_1=1;
-                en_2=0;
-                en_3=1;
-                for(double i=0.0;i<1.57;i+=0.01){
-                    seno = sin(i);
-                    uh_1.write(seno);
-                    vh_2.write(sqrt(1-(pow(seno,2))));
-                    wait_us(TEMPO_ATT1);
-                }
-                break;
-            case 1:
-                //uh_1.write(0.0f);
-                //vh_2.write(pwm_positive);
-                wh_3.write(gnd_negative);
-                en_1=0;
-                en_2=1;
-                en_3=1;
-                for(double i=0.0;i<1.57;i+=0.01){
-                    seno = sin(i);
-                    vh_2.write(sin(i));
-                    uh_1.write(sqrt(1-(pow(seno,2))));
-                    wait_us(TEMPO_ATT1);
-                }
-                break;
-            case 2:
-                uh_1.write(gnd_negative);
-                //vh_2.write(pwm_positive);
-                //wh_3.write(0.0f);
-                en_1=1;
-                en_2=1;
-                en_3=0;
-               
-                for(double i=0.0;i<1.57;i+=0.01){
-                    seno = sin(i);
-                    vh_2.write(sin(i));
-                    wh_3.write(sqrt(1-(pow(seno,2))));
-                    wait_us(TEMPO_ATT1);
-                }
-                break;
-            case 3:
-                uh_1.write(gnd_negative);
-                //vh_2.write(0.0f);
-                //wh_3.write(pwm_positive);
-                en_1=1;
-                en_2=0;
-                en_3=1;
-               
-                for(double i=0.0;i<1.57;i+=0.01){
-                    seno = sin(i);
-                    wh_3.write(sin(i));
-                    vh_2.write(sqrt(1-(pow(seno,2))));
-                    wait_us(TEMPO_ATT1);
-                }
-                break;
-            case 4:
-                //uh_1.write(0.0f);
-                vh_2.write(gnd_negative);
-                //wh_3.write(pwm_positive);
-                en_1=0;
-                en_2=1;
-                en_3=1;
-               
-                for(double i=0.0;i<1.57;i+=0.01){
-                    seno = sin(i);
-                    wh_3.write(sin(i));
-                    uh_1.write(sqrt(1-(pow(seno,2))));
-                    wait_us(TEMPO_ATT1);
-                }
-                break;
-            case 5:
-                //uh_1.write(pwm_positive);
-                vh_2.write(gnd_negative);
-                //wh_3.write(0.0f);
-                en_1=1;
-                en_2=1;
-                en_3=0;
-               
-                for(double i=0.0;i<1.57;i+=0.01){
-                    seno = sin(i);
-                    uh_1.write(sin(i));
-                    wh_3.write(sqrt(1-(pow(seno,2))));
-                    wait_us(TEMPO_ATT1);
-                }
-                break;
-        }
-        
+  // Switch through step values to activate correct phases
+  // For each step we have one phase with positive voltage PWM, one phase connected to ground and one phase disconnected
+  switch (step_number)
+  {
+  case 0:
+    uh_1.write(pwm_positive); //PWM
+    vh_2.write(0.0f);         //DISCONNECTED
+    wh_3.write(gnd_negative); //GND
+    en_1 = 1;                 //PWM
+    en_2 = 0;                 //DISCONNECTED
+    en_3 = 1;                 //GND
+    break;
 
-        pc.printf("%d) angle: %f - posit: %f\n",step_number,angle,position);
-        
-        
-        
-        wait_us(1);
-    }
+  case 1:
+    uh_1.write(0.0f);         //DISCONNECTED
+    vh_2.write(pwm_positive); //PWM
+    wh_3.write(gnd_negative); //GND
+    en_1 = 0;                 //DISCONNECTED
+    en_2 = 1;                 //PWM
+    en_3 = 1;                 //GND
+    break;
+
+  case 2:
+    uh_1.write(gnd_negative); //GND
+    vh_2.write(pwm_positive); //PWM
+    wh_3.write(0.0f);         //DISCONNECTED
+    en_1 = 1;                 //GND
+    en_2 = 1;                 //PWM
+    en_3 = 0;                 //DISCONNECTED
+    break;
+
+  case 3:
+    uh_1.write(gnd_negative); //GND
+    vh_2.write(0.0f);         //DISCONNECTED
+    wh_3.write(pwm_positive); //PWM
+    en_1 = 1;                 //GND
+    en_2 = 0;                 //DISCONNECTED
+    en_3 = 1;                 //PWM
+    break;
+
+  case 4:
+    uh_1.write(0.0f);         //DISCONNECTED
+    vh_2.write(gnd_negative); //GND
+    wh_3.write(pwm_positive); //PWM
+    en_1 = 0;                 //DISCONNECTED
+    en_2 = 1;                 //GND
+    en_3 = 1;                 //PWM
+    break;
+
+  case 5:
+    uh_1.write(pwm_positive); //PWM
+    vh_2.write(gnd_negative); //GND
+    wh_3.write(0.0f);         //DISCONNECTED
+    en_1 = 1;                 //PWM
+    en_2 = 1;                 //GND
+    en_3 = 0;                 //DISCONNECTED
+    break;
+
+  default:
+    break;
+  }
+}
+
+// This is the main function
+int main()
+{
+  en_chip = 1; // Enable motor driver chip
+
+  // Set PWM period and initializes enables pins
+  uh_1.period(PWM_PERIOD);
+  vh_2.period(PWM_PERIOD);
+  wh_3.period(PWM_PERIOD);
+  en_1 = 0;
+  en_2 = 0;
+  en_3 = 0;
+
+  // Main loop
+  while (true)
+  {
+    // Read hall sensor's angle
+    angle = encoder.get_angle_degrees();
+
+    // Read position from hall sensor's angle divided by electrical poles
+    position = fmod(angle, 51.43f); //360/7, where 7 is number of magnets divided by 2
+
+    // Checks step value and eventually runs motor
+    step_forward();
+  }
 }
