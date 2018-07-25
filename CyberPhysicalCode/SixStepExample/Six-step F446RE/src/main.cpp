@@ -34,8 +34,8 @@
 // PWM frequency 100kHz
 #define PWM_PERIOD 0.00001f
 // Internal Timer 7
-#define TIM_USR      TIM3
-#define TIM_USR_IRQ  TIM3_IRQn
+#define TIM_USR      TIM7
+#define TIM_USR_IRQ  TIM7_IRQn
 
 
 // Serial communication
@@ -83,7 +83,7 @@ char pressed = 0;
 // Current motor value
 int icurrent = 0;
 // PWM duty cycle for motor phase
-float duty_cycle = 0.0f;
+float duty_cycle = 0.5f;
 float pwm_positive = duty_cycle;
 float gnd_negative = 0.0f;
 // ON board LED
@@ -103,14 +103,14 @@ DigitalOut en_3(PC_12);
 // MOTOR DRIVER CHIP ENABLE PIN
 DigitalOut en_chip(PA_6);
 // BUTTON
-DigitalIn button(USER_BUTTON);
+DigitalIn button(PC_13);
 
 float K = 0.85f;
 
 // Timer handler
 TIM_HandleTypeDef mTimUserHandle;
 
-// This function handle TIM3 interrupt, it simply set flag_time to 1 to save execution time
+// This function handle TIM7 interrupt, it simply set flag_time to 1 to save execution time
 extern "C"
 
 void M_TIM_USR_Handler(void) {
@@ -147,7 +147,8 @@ void pi()
   else if(duty_cycle > 1.0f)
     duty_cycle = 1.0f;
   
-  pwm_positive = duty_cycle;
+  //pwm_positive = duty_cycle; //TODO: capire perchè non va col potenziometri
+  pwm_positive = 0.5f;
   gnd_negative = 0.0f;
 
 /*
@@ -217,7 +218,6 @@ void stepRead()
     step_number=2;
   }
 }
-
 
 // This function reads button state to START/STOP motor
 void buttonRead()
@@ -338,9 +338,9 @@ int main() {
   en_chip = 1;    // Enable motor driver chip
   pc.printf("Activating the motor...\n");
 
-  // Enable timer 3
+  // Enable timer 7
     // equivalent of __GPIOA_CLK_ENABLE();
-  __HAL_RCC_TIM3_CLK_ENABLE();
+  __HAL_RCC_TIM7_CLK_ENABLE();
 
   // Set timer 3 values to work at 200us
   // instance indica l'indirizzo del registro base, ovvero, del timer che vogliamo utilizzare in base al processore che stiamo adoperando
@@ -382,8 +382,6 @@ int main() {
 
   pc.printf("Ready. Press the button to start.\n");
   motor_on=1;
-  
-  int cnt_print = 0;
 
   // Main loop
   while (true) {
@@ -393,11 +391,11 @@ int main() {
 	    // Reset flag
       flag_time=0;
 	    // Counter for slower tasks
-      cnt_time++;
+      //cnt_time++;
 	    
       // Tasks slower than others
-      if(cnt_time>32)
-      {
+      /*if(cnt_time>32)
+      //{
 		    // Calculate duty_cycle
         if(motor_on==1)
           pi();
@@ -408,27 +406,22 @@ int main() {
 		    
         // Read potentiometer
         analogRead();
-      }
-
-      if(cnt_print > 100){
-        pc.printf("%f, %f\n", angle, phase_B_curr.read_u16() / 4096.0f * 1.4f);
-        cnt_print = 0;
-      }
-      wait_ms(10); // TODO per cambiare la velocità del motore basta cambiare questo
-      pc.printf("Position: %f\n", position);
-      cnt_print++;
+      }*/
 
 	    // Read hall sensor's angle
       angle = encoder.get_angle_degrees();
       
       // Read position from hall sensor's angle divided by electrical poles
       position = fmod(angle,51.43f); //360/7=51.43, where 7 is number of magnets divided by 2
+
+      wait_ms(200); // TODO per cambiare la velocità del motore basta cambiare questo
+      pc.printf("Step: %d - Position: %f - Angle: %f\n",step_number,position,angle);
       
       // Checks step value and eventually runs motor
       step_forward();
 	  
 	    // Accumulates current value 0.33*2.8*1.53*2
-      sum_current += phase_B_curr.read_u16()>>4;
+      /*sum_current += phase_B_curr.read_u16()>>4;
 	    
       // Accumulates 16 values and then means them
       cnt_current++;
@@ -439,7 +432,7 @@ int main() {
         // Read motor current value filtered
         icurrent = sum_current>>4;
         sum_current = 0;
-      }
+      }*/
     }
   }
 }
