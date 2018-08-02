@@ -8,18 +8,15 @@
 // AS5601
 AS5601 encoder(I2C_SDA, I2C_SCL);
 
-// variable to keep angle value from hall sensor
+// Variable to keep angle value from hall sensor
 float angle = 0;
 // Actual motor step
-volatile char step_number = 0;
+char step_number = 0;
 // Angle value scaled by electrical poles
-volatile float position = 0;
+float position = 0;
 // PWM duty cycle for motor phase
-float duty_cycle = 0.3f;
-float pwm_positive = duty_cycle;
+float pwm_positive = 0.3f;
 float gnd_negative = 0.0f;
-// ON board LED
-DigitalOut led1(LED1);
 // Phase 1 PWM OUT
 PwmOut uh_1(PA_8);
 // Phase 2 PWM OUT
