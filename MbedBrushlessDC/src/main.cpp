@@ -7,6 +7,7 @@
 
 // AS5601
 AS5601 encoder(I2C_SDA, I2C_SCL);
+Serial pc(USBTX, USBRX, 9600); // tx, rx, speed
 
 // variable to keep angle value from hall sensor
 float angle = 0;
@@ -15,7 +16,7 @@ volatile char step_number = 0;
 // Angle value scaled by electrical poles
 volatile float position = 0;
 // PWM duty cycle for motor phase
-float duty_cycle = 1.0f;
+float duty_cycle = 0.3f;
 float pwm_positive = duty_cycle;
 float gnd_negative = 0.0f;
 // ON board LED
@@ -34,6 +35,13 @@ DigitalOut en_2(PC_11);
 DigitalOut en_3(PC_12);
 // MOTOR DRIVER CHIP ENABLE PIN
 DigitalOut en_chip(PA_6);
+// Potentiometer read
+AnalogIn ain(PB_1);
+
+void read_potentiometer()
+{
+  pwm_positive=ain.read();
+}
 
 // This function converts hall sensor's angle into 6 electrical positions of a BLDC motor
 void stepRead()
@@ -161,6 +169,9 @@ int main()
 
     // Read position from hall sensor's angle divided by electrical poles
     position = fmod(angle, 51.43f); //360/7, where 7 is number of magnets divided by 2
+
+    // Read the potentiometer value and set the duty cycle
+    read_potentiometer();
 
     // Checks step value and eventually runs motor
     step_forward();

@@ -12,7 +12,7 @@
         "PLATFORMIO_CALLER": "vscode"
     },
     "terminal.integrated.env.linux": {
-        "PATH": "/home/luca/.platformio/penv/bin:/home/luca/.platformio/penv:/home/luca/bin:/home/luca/.local/bin:/opt/ros/kinetic/bin:/home/luca/bin:/home/luca/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+        "PATH": "/home/matteo/.platformio/penv/bin:/home/matteo/.platformio/penv:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
         "PLATFORMIO_CALLER": "vscode"
     }
 }

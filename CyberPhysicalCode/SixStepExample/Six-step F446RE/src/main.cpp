@@ -391,11 +391,11 @@ int main() {
 	    // Reset flag
       flag_time=0;
 	    // Counter for slower tasks
-      //cnt_time++;
+      cnt_time++;
 	    
       // Tasks slower than others
-      /*if(cnt_time>32)
-      //{
+      if(cnt_time>32)
+      {
 		    // Calculate duty_cycle
         if(motor_on==1)
           pi();
@@ -406,7 +406,7 @@ int main() {
 		    
         // Read potentiometer
         analogRead();
-      }*/
+      }
 
 	    // Read hall sensor's angle
       angle = encoder.get_angle_degrees();
@@ -421,7 +421,7 @@ int main() {
       step_forward();
 	  
 	    // Accumulates current value 0.33*2.8*1.53*2
-      /*sum_current += phase_B_curr.read_u16()>>4;
+      sum_current += phase_B_curr.read_u16()>>4;
 	    
       // Accumulates 16 values and then means them
       cnt_current++;
@@ -432,7 +432,7 @@ int main() {
         // Read motor current value filtered
         icurrent = sum_current>>4;
         sum_current = 0;
-      }*/
+      }
     }
   }
 }
